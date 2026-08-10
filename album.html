@@ -37,26 +37,43 @@
     position:relative;
     width:min(90vw, 480px);
     aspect-ratio:3/4;
+    overflow:hidden;
+    border-radius:4px;
+    box-shadow:0 20px 45px var(--shadow);
   }
   .page{
     position:absolute;
     inset:0;
     background:var(--paper);
-    border-radius:4px;
-    box-shadow:0 20px 45px var(--shadow);
-    transform-origin:left center;
-    transform-style:preserve-3d;
-    transition:transform 0.7s cubic-bezier(.4,.2,.2,1);
     display:flex;
     flex-direction:column;
     overflow:hidden;
+    opacity:0;
+    pointer-events:none;
+    transform:rotateY(90deg);
+    transform-origin:left center;
+    transition:transform 0.5s ease, opacity 0.35s ease;
+    z-index:1;
+  }
+  .page.active{
+    opacity:1;
+    pointer-events:auto;
+    transform:rotateY(0deg);
+    z-index:5;
+  }
+  .page.prev{
+    transform:rotateY(-90deg);
+    opacity:0;
+  }
+  .page.next{
+    transform:rotateY(90deg);
+    opacity:0;
   }
   .page img{
     width:100%;
     height:100%;
     object-fit:cover;
     display:block;
-    backface-visibility:hidden;
   }
   .page .cap{
     position:absolute;
@@ -67,7 +84,6 @@
     font-family:var(--serif);
     font-size:14px;
   }
-  .page.flipped{ transform:rotateY(-180deg); }
   .page-num{
     position:absolute;
     bottom:8px;
@@ -126,7 +142,7 @@
 const GITHUB_OWNER  = "anguyen1601";
 const GITHUB_REPO   = "Nemours_Estate";
 const GITHUB_BRANCH = "main";
-const GITHUB_PATH   = "images";   // folder containing the photos
+const GITHUB_PATH   = "images/nemours-estate";   // folder containing the photos
 const COVER_IMAGE   = `${GITHUB_PATH}/cover.jpg`; // cover image, same folder
 const ALBUM_TITLE   = "Delaware - The first state";
 
@@ -176,10 +192,10 @@ function buildBook() {
   pages.forEach((p, i) => {
     const div = document.createElement('div');
     div.className = 'page';
-    div.style.zIndex = pages.length - i;
+    div.dataset.index = i;
     div.innerHTML = `
       <img src="${p.src}" alt="${p.caption}" loading="lazy">
-      <div class="cap">${p.isCover ? p.caption : p.caption}</div>
+      <div class="cap">${p.caption}</div>
       <div class="page-num">${i + 1} / ${pages.length}</div>
     `;
     book.appendChild(div);
@@ -189,9 +205,16 @@ function buildBook() {
 
 function render() {
   const pageEls = book.querySelectorAll('.page');
-  pageEls.forEach((el, i) => {
-    el.classList.toggle('flipped', i < current);
-    el.style.zIndex = i < current ? i : pages.length - i;
+  pageEls.forEach((el) => {
+    const i = Number(el.dataset.index);
+    el.classList.remove('active', 'prev', 'next');
+    if (i === current) {
+      el.classList.add('active');
+    } else if (i < current) {
+      el.classList.add('prev');
+    } else {
+      el.classList.add('next');
+    }
   });
   counter.textContent = `${current + 1} / ${pages.length}`;
   prevBtn.disabled = current === 0;
