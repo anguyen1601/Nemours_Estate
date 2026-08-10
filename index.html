@@ -5,7 +5,6 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Nemours Estate — Virtual Postcard</title>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
 <style>
   :root{
     --paper:#efe8da;
@@ -302,10 +301,9 @@ Anh mong em sẽ cảm nhận được một phần lịch sử của &quot;Ti�
       </div>
       <div class="divider"></div>
       <div class="back-right">
-        <div class="stamp-box" id="stampBox" title="Click to generate a QR code linking to your location photos">
+        <div class="stamp-box" id="stampBox">
           <div id="qrcode"></div>
         </div>
-        <div class="stamp-label">tap stamp for QR</div>
         <div class="to-lines">
           <div class="to-line"><input type="text" placeholder="To"></div>
           <div class="to-line"><input type="text" placeholder=""></div>
@@ -318,89 +316,27 @@ Anh mong em sẽ cảm nhận được một phần lịch sử của &quot;Ti�
 
 <div class="controls">
   <button id="flipBtn">Flip postcard</button>
-  <button id="qrBtn">Add QR code</button>
-  <button id="stampMarkBtn">Stamp postmark</button>
-  <button id="exportBtn" class="accent">Export as image</button>
-  <button id="saveBtn">Save for GitHub</button>
-</div>
-
-<div class="panel" id="qrPanel">
-  <label for="qrUrl">Link for QR code (e.g. a GitHub folder or album with your location photos)</label>
-  <input type="text" id="qrUrl" placeholder="https://github.com/yourname/postcards/tree/main/images/nemours-estate">
-  <button id="qrGenBtn">Generate</button>
-  <p class="hint">The QR code is generated locally in your browser. Point it at wherever you keep the photos for this location — a GitHub folder, an album, anything with a URL.</p>
 </div>
 
 <script>
-let qr = null;
 const postcard = document.getElementById('postcard');
-const qrPanel = document.getElementById('qrPanel');
-const stampBox = document.getElementById('stampBox');
-const postmark = document.getElementById('postmark');
 
-document.getElementById('flipBtn').addEventListener('click', () => {
-  postcard.classList.toggle('flipped');
-});
+const DEFAULT_QR_URL = "https://anguyen1601.github.io/postcards/album.html";
 
-document.getElementById('qrBtn').addEventListener('click', (e) => {
-  e.stopPropagation();
-  qrPanel.classList.toggle('open');
-});
-stampBox.addEventListener('click', (e) => {
-  e.stopPropagation();
-  qrPanel.classList.toggle('open');
-});
-
-document.getElementById('qrGenBtn').addEventListener('click', () => {
-  const url = document.getElementById('qrUrl').value.trim();
-  if (!url) return;
+function generateQRCode(url) {
   document.getElementById('qrcode').innerHTML = '';
-  qr = new QRCode(document.getElementById('qrcode'), {
+  new QRCode(document.getElementById('qrcode'), {
     text: url,
     width: 96,
     height: 96,
     colorDark: '#2b3a55',
     colorLight: '#ffffff'
   });
-  qrPanel.classList.remove('open');
-});
+}
+generateQRCode(DEFAULT_QR_URL);
 
-document.getElementById('stampMarkBtn').addEventListener('click', (e) => {
-  e.stopPropagation();
-  const d = new Date();
-  const months = ['JAN','FEB','MAR','APR','MAY','JUN','JUL','AUG','SEP','OCT','NOV','DEC'];
-  document.getElementById('postmark-date').textContent =
-    months[d.getMonth()] + ' ' + d.getDate() + ' ' + d.getFullYear();
-  postmark.classList.toggle('show');
-});
-
-document.getElementById('exportBtn').addEventListener('click', (e) => {
-  e.stopPropagation();
-  const face = postcard.classList.contains('flipped')
-    ? postcard.querySelector('.face.back')
-    : postcard.querySelector('.face.front');
-  html2canvas(face, {backgroundColor: '#efe8da', scale: 2}).then(canvas => {
-    const link = document.createElement('a');
-    link.download = 'nemours-postcard-' + (postcard.classList.contains('flipped') ? 'back' : 'front') + '.png';
-    link.href = canvas.toDataURL('image/png');
-    link.click();
-  });
-});
-
-document.getElementById('saveBtn').addEventListener('click', (e) => {
-  e.stopPropagation();
-  const data = {
-    location: "Nemours Estate, Wilmington, DE 19803",
-    message: document.getElementById('message').value,
-    to: Array.from(document.querySelectorAll('.to-line input')).map(i => i.value),
-    qr_url: document.getElementById('qrUrl').value.trim(),
-    date: new Date().toISOString()
-  };
-  const blob = new Blob([JSON.stringify(data, null, 2)], {type: 'application/json'});
-  const link = document.createElement('a');
-  link.download = 'nemours-postcard-metadata.json';
-  link.href = URL.createObjectURL(blob);
-  link.click();
+document.getElementById('flipBtn').addEventListener('click', () => {
+  postcard.classList.toggle('flipped');
 });
 
 document.querySelectorAll('textarea, input').forEach(el => {
