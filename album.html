@@ -130,8 +130,8 @@ const GITHUB_PATH   = "images/nemours-estate";   // folder containing the photos
 const COVER_IMAGE   = `${GITHUB_PATH}/cover.jpg`; // cover image, same folder
 const ALBUM_TITLE   = "Delaware - The first state";
 
-const apiUrl  = "https://api.github.com/repos/${GITHUB_OWNER}/${GITHUB_REPO}/contents/${GITHUB_PATH}?ref=${GITHUB_BRANCH}";
-const rawBase = "https://raw.githubusercontent.com/${GITHUB_OWNER}/${GITHUB_REPO}/${GITHUB_BRANCH}";
+const apiUrl  = `https://api.github.com/repos/${GITHUB_OWNER}/${GITHUB_REPO}/contents/${GITHUB_PATH}?ref=${GITHUB_BRANCH}`;
+const rawBase = `https://raw.githubusercontent.com/${GITHUB_OWNER}/${GITHUB_REPO}/${GITHUB_BRANCH}`;
 
 const book = document.getElementById('book');
 const statusEl = document.getElementById('status');
