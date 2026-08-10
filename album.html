@@ -7,9 +7,9 @@
 <style>
   @import url('https://fonts.googleapis.com/css2?family=Playfair+Display:wght@600;700&family=Special+Elite&display=swap');
   :root{
-    --paper:#efe8da;
+    --paper:#faf7f0;
     --ink:#2b3a55;
-    --shadow:rgba(35,28,15,0.4);
+    --shadow:rgba(30,25,15,0.35);
     --serif:'Playfair Display', Georgia, serif;
     --type:'Special Elite', monospace;
   }
@@ -17,110 +17,194 @@
   body{
     margin:0;
     min-height:100vh;
-    background:#1f2a24;
+    background:
+      radial-gradient(circle at 15% 10%, rgba(255,255,255,0.5), transparent 40%),
+      radial-gradient(circle at 90% 85%, rgba(255,255,255,0.4), transparent 45%),
+      linear-gradient(135deg, #dce6e0, #eef0e4);
     display:flex;
     flex-direction:column;
     align-items:center;
     justify-content:center;
     padding:40px 16px;
     font-family:var(--type);
-    color:#eee6d3;
+    color:#2b3a2f;
   }
   h1{
     font-family:var(--serif);
-    font-size:24px;
-    margin:0 0 24px;
+    font-weight:700;
+    font-size:26px;
+    margin:0 0 2px;
     text-align:center;
+    color:#25301f;
   }
-  .book-stage{ perspective:2600px; overflow:hidden; border-radius:4px; }
+  p.sub{
+    font-size:11px;
+    letter-spacing:2px;
+    text-transform:uppercase;
+    color:#6b7a68;
+    margin:0 0 28px;
+  }
+
+  .book-stage{ perspective:2800px; }
   .book{
     position:relative;
-    width:min(90vw, 480px);
-    aspect-ratio:3/4;
-    transform-style:preserve-3d;
+    width:min(92vw, 760px);
+    aspect-ratio:16/10;
+    display:flex;
+    box-shadow:0 30px 60px var(--shadow), 0 4px 0 rgba(255,255,255,0.4) inset;
+    border-radius:6px;
+    background:#20241f;
   }
-  .page{
+
+  .spine{
     position:absolute;
-    inset:0;
-    background:var(--paper);
-    border-radius:4px;
-    box-shadow:0 20px 45px var(--shadow);
-    transform-origin:left center;
-    transform-style:preserve-3d;
-    transition:transform 0.7s cubic-bezier(.4,.2,.2,1), visibility 0s linear 0s;
+    left:50%;
+    top:-3%;
+    bottom:-3%;
+    width:26px;
+    transform:translateX(-50%);
+    z-index:50;
     display:flex;
     flex-direction:column;
+    justify-content:space-evenly;
+    align-items:center;
+    pointer-events:none;
+  }
+  .spine .ring{
+    width:22px;
+    height:22px;
+    border-radius:50%;
+    border:3px solid #cfd3d6;
+    background:
+      linear-gradient(135deg, #f4f6f7, #9ea4a8);
+    box-shadow:0 2px 4px rgba(0,0,0,0.4);
+  }
+
+  .leaf{
+    position:absolute;
+    inset:0;
+    display:flex;
+    transform-style:preserve-3d;
+  }
+  .half{
+    width:50%;
+    height:100%;
+    background:var(--paper);
     overflow:hidden;
+    position:relative;
     backface-visibility:hidden;
     -webkit-backface-visibility:hidden;
-    visibility:visible;
   }
-  .page img{
+  .half.left{ border-radius:6px 0 0 6px; }
+  .half.right{ border-radius:0 6px 6px 0; }
+  .half img{
     width:100%;
     height:100%;
     object-fit:cover;
     display:block;
-    backface-visibility:hidden;
-    -webkit-backface-visibility:hidden;
   }
-  .page .cap{
+  .half .cap{
     position:absolute;
     left:0; right:0; bottom:0;
-    padding:10px 14px;
+    padding:8px 12px;
     background:linear-gradient(to top, rgba(0,0,0,0.55), transparent);
     color:#f4efe2;
     font-family:var(--serif);
-    font-size:14px;
+    font-size:13px;
   }
-  .page.flipped{
-    transform:rotateY(-180deg);
-    visibility:hidden;
-    transition:transform 0.7s cubic-bezier(.4,.2,.2,1), visibility 0s linear 0.7s;
-  }
-  .page-num{
-    position:absolute;
-    bottom:8px;
-    right:12px;
-    font-size:10px;
-    color:#eee6d3;
-    background:rgba(0,0,0,0.4);
-    padding:2px 6px;
-    border-radius:3px;
-  }
-  .loading, .error{
-    font-size:12px;
-    color:#b9ad92;
-    text-align:center;
-    padding:40px 10px;
-  }
-  .controls{
-    margin-top:22px;
+  .half.cover-half{
     display:flex;
-    gap:12px;
+    align-items:center;
+    justify-content:center;
+    flex-direction:column;
+    background:linear-gradient(160deg, #2f3a2c, #1b2318);
+    color:#e9e3cf;
+    text-align:center;
+    padding:10%;
+  }
+  .half.cover-half h2{
+    font-family:var(--serif);
+    font-size:clamp(18px,3vw,28px);
+    margin:0 0 6px;
+  }
+  .half.cover-half span{
+    font-size:10px;
+    letter-spacing:2px;
+    text-transform:uppercase;
+    color:#b9ad92;
+  }
+
+  /* flipping page sits above, pivots at the spine */
+  .flip-page{
+    position:absolute;
+    top:0; bottom:0;
+    width:50%;
+    transform-origin:left center;
+    transform-style:preserve-3d;
+    transition:transform 0.8s cubic-bezier(.45,.05,.15,1);
+    z-index:40;
+  }
+  .flip-page.right-anchored{ left:50%; transform-origin:left center; }
+  .flip-page.left-anchored{ left:0; transform-origin:right center; }
+  .flip-page .face{
+    position:absolute;
+    inset:0;
+    backface-visibility:hidden;
+    -webkit-backface-visibility:hidden;
+    overflow:hidden;
+    background:var(--paper);
+  }
+  .flip-page .face img{
+    width:100%;
+    height:100%;
+    object-fit:cover;
+    display:block;
+  }
+  .flip-page .face.back{ transform:rotateY(180deg); }
+
+  .loading, .error{
+    position:absolute;
+    inset:0;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    font-size:12px;
+    color:#8a9188;
+    background:var(--paper);
+    border-radius:6px;
+  }
+
+  .controls{
+    margin-top:26px;
+    display:flex;
+    gap:14px;
     align-items:center;
   }
   button{
     font-family:var(--type);
     font-size:12px;
-    background:#eee6d3;
-    color:#1f2a24;
+    background:#25301f;
+    color:#eee6d3;
     border:none;
     border-radius:3px;
-    padding:10px 16px;
+    padding:10px 18px;
     cursor:pointer;
+    letter-spacing:0.5px;
   }
-  button:disabled{ opacity:0.35; cursor:default; }
-  button:hover:not(:disabled){ background:#fff; }
-  .counter{ font-size:12px; color:#b9ad92; min-width:60px; text-align:center; }
+  button:disabled{ opacity:0.3; cursor:default; }
+  button:hover:not(:disabled){ background:#354129; }
+  .counter{ font-size:12px; color:#5c6a58; min-width:60px; text-align:center; }
 </style>
 </head>
 <body>
 
-<h1>Nemours Estate — Album</h1>
+<h1>Nemours Estate</h1>
+<p class="sub">Spiral photo album</p>
 
 <div class="book-stage">
   <div class="book" id="book">
     <div class="loading" id="status">Loading album…</div>
+    <div class="spine" id="spine"></div>
   </div>
 </div>
 
@@ -135,29 +219,31 @@
 const GITHUB_OWNER  = "anguyen1601";
 const GITHUB_REPO   = "Nemours_Estate";
 const GITHUB_BRANCH = "main";
-const GITHUB_PATH   = "images";   // folder containing the photos
-const COVER_IMAGE   = `${GITHUB_PATH}/cover.jpg`; // cover image, same folder
-const ALBUM_TITLE   = "Delaware - The first state";
+const GITHUB_PATH   = "images";                    // folder containing the photos
+const COVER_IMAGE   = `${GITHUB_PATH}/cover.jpg`;   // cover image, same folder
+const ALBUM_TITLE   = "Delaware — The First State";
 
 const apiUrl  = `https://api.github.com/repos/${GITHUB_OWNER}/${GITHUB_REPO}/contents/${GITHUB_PATH}?ref=${GITHUB_BRANCH}`;
 const rawBase = `https://raw.githubusercontent.com/${GITHUB_OWNER}/${GITHUB_REPO}/${GITHUB_BRANCH}`;
 
 const book = document.getElementById('book');
 const statusEl = document.getElementById('status');
+const spineEl = document.getElementById('spine');
 const prevBtn = document.getElementById('prevBtn');
 const nextBtn = document.getElementById('nextBtn');
 const counter = document.getElementById('counter');
 
-let pages = [];   // [{src, caption}]
+let photos = [];      // [{src, caption}]
+let spreads = [];      // [{left, right, isCover}]
 let current = 0;
+let animating = false;
 
 async function loadAlbum() {
-  let photoUrls = [];
   try {
     const res = await fetch(apiUrl);
     if (!res.ok) throw new Error('GitHub API error ' + res.status);
     const files = await res.json();
-    photoUrls = files
+    photos = files
       .filter(f => f.type === 'file' && /\.(jpe?g|png|webp)$/i.test(f.name) && f.name.toLowerCase() !== 'cover.jpg')
       .sort((a, b) => a.name.localeCompare(b.name))
       .map(f => ({ src: `${rawBase}/${GITHUB_PATH}/${f.name}`, caption: f.name.replace(/\.[^.]+$/, '').replace(/_/g, ' ') }));
@@ -167,53 +253,123 @@ async function loadAlbum() {
     return;
   }
 
-  pages = [
-    { src: `${rawBase}/${COVER_IMAGE}`, caption: ALBUM_TITLE, isCover: true },
-    ...photoUrls
-  ];
-
-  if (pages.length === 1) {
+  if (photos.length === 0) {
     statusEl.textContent = 'No photos found in ' + GITHUB_PATH;
     return;
   }
 
-  buildBook();
+  spreads.push({ isCover: true });
+  for (let i = 0; i < photos.length; i += 2) {
+    spreads.push({ left: photos[i], right: photos[i + 1] || null });
+  }
+
+  statusEl.remove();
+  buildSpine();
+  renderSpread(0, null);
 }
 
-function buildBook() {
-  book.innerHTML = '';
-  pages.forEach((p, i) => {
-    const div = document.createElement('div');
-    div.className = 'page';
-    div.style.zIndex = pages.length - i;
-    div.innerHTML = `
-      <img src="${p.src}" alt="${p.caption}" loading="lazy">
-      <div class="cap">${p.isCover ? p.caption : p.caption}</div>
-      <div class="page-num">${i + 1} / ${pages.length}</div>
-    `;
-    book.appendChild(div);
+function buildSpine() {
+  spineEl.innerHTML = '';
+  for (let i = 0; i < 10; i++) {
+    const r = document.createElement('div');
+    r.className = 'ring';
+    spineEl.appendChild(r);
+  }
+}
+
+function halfContent(item, isLeftSide) {
+  if (!item) return '<div class="half ' + (isLeftSide ? 'left' : 'right') + '"></div>';
+  return `<div class="half ${isLeftSide ? 'left' : 'right'}">
+      <img src="${item.src}" alt="${item.caption}">
+      <div class="cap">${item.caption}</div>
+    </div>`;
+}
+
+function coverHalfLeft() {
+  return `<div class="half left cover-half">
+      <span>Nemours Estate</span>
+      <h2>${ALBUM_TITLE}</h2>
+    </div>`;
+}
+
+function renderSpread(index, direction) {
+  // remove any previous leaves not needed
+  const spread = spreads[index];
+  let leftHTML, rightHTML;
+
+  if (spread.isCover) {
+    leftHTML = coverHalfLeft();
+    rightHTML = photos[0]
+      ? `<div class="half right"><img src="${photos[0].src}" alt="${photos[0].caption}"><div class="cap">${photos[0].caption}</div></div>`
+      : '<div class="half right"></div>';
+  } else {
+    leftHTML = halfContent(spread.left, true);
+    rightHTML = halfContent(spread.right, false);
+  }
+
+  const leaf = document.createElement('div');
+  leaf.className = 'leaf';
+  leaf.innerHTML = leftHTML + rightHTML;
+  book.appendChild(leaf);
+
+  // remove older leaves (keep DOM light)
+  document.querySelectorAll('.leaf').forEach((el, i, arr) => {
+    if (el !== leaf) el.remove();
   });
-  render();
+
+  counter.textContent = `${index + 1} / ${spreads.length}`;
+  prevBtn.disabled = index === 0;
+  nextBtn.disabled = index === spreads.length - 1;
 }
 
-function render() {
-  const pageEls = book.querySelectorAll('.page');
-  pageEls.forEach((el, i) => {
-    const isFlipped = i < current;
-    el.classList.toggle('flipped', isFlipped);
-    el.style.zIndex = isFlipped ? i : pages.length - i;
+function flipTo(nextIndex, dir) {
+  if (animating || nextIndex < 0 || nextIndex >= spreads.length) return;
+  animating = true;
+
+  const curSpread = spreads[current];
+  const nextSpread = spreads[nextIndex];
+
+  const flip = document.createElement('div');
+  flip.className = 'flip-page ' + (dir === 'next' ? 'right-anchored' : 'left-anchored');
+
+  let frontItem, backItem;
+  if (dir === 'next') {
+    frontItem = curSpread.isCover ? photos[0] : curSpread.right;
+    backItem = nextSpread.isCover ? null : nextSpread.left;
+  } else {
+    frontItem = curSpread.isCover ? null : curSpread.left;
+    backItem = nextSpread.isCover ? photos[0] : nextSpread.right;
+  }
+
+  const frontHTML = frontItem
+    ? `<img src="${frontItem.src}" alt="${frontItem.caption}">`
+    : '';
+  const backHTML = backItem
+    ? `<img src="${backItem.src}" alt="${backItem.caption}">`
+    : '';
+
+  flip.innerHTML = `
+    <div class="face front">${frontHTML}</div>
+    <div class="face back">${backHTML}</div>
+  `;
+  book.appendChild(flip);
+
+  requestAnimationFrame(() => {
+    requestAnimationFrame(() => {
+      flip.style.transform = dir === 'next' ? 'rotateY(-180deg)' : 'rotateY(180deg)';
+    });
   });
-  counter.textContent = `${current + 1} / ${pages.length}`;
-  prevBtn.disabled = current === 0;
-  nextBtn.disabled = current === pages.length - 1;
+
+  setTimeout(() => {
+    current = nextIndex;
+    renderSpread(current, dir);
+    flip.remove();
+    animating = false;
+  }, 800);
 }
 
-prevBtn.addEventListener('click', () => {
-  if (current > 0) { current--; render(); }
-});
-nextBtn.addEventListener('click', () => {
-  if (current < pages.length - 1) { current++; render(); }
-});
+prevBtn.addEventListener('click', () => flipTo(current - 1, 'prev'));
+nextBtn.addEventListener('click', () => flipTo(current + 1, 'next'));
 document.addEventListener('keydown', (e) => {
   if (e.key === 'ArrowRight') nextBtn.click();
   if (e.key === 'ArrowLeft') prevBtn.click();
