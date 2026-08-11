@@ -117,6 +117,7 @@
     box-shadow:0 12px 30px rgba(0,0,0,0.35);
     display:block;
   }
+  .half.right img.mirrored{ transform:scaleX(-1); }
   .half .cap{
     margin-top:12px;
     font-family:var(--serif);
@@ -304,7 +305,9 @@ async function loadAlbum() {
   spreads.push({ left: null, right: photos[0] });
   const rest = photos.slice(1);
   for (let i = 0; i < rest.length; i += 2) {
-    spreads.push({ left: rest[i], right: rest[i + 1] || null });
+    const left = rest[i];
+    const right = rest[i + 1] || { src: left.src, caption: '', mirror: true };
+    spreads.push({ left, right });
   }
 
   statusEl.remove();
@@ -323,8 +326,9 @@ function buildSpine() {
 
 function halfHTML(item, sideClass) {
   if (!item) return `<div class="half ${sideClass}"></div>`;
+  const mirrorClass = item.mirror ? ' mirrored' : '';
   return `<div class="half ${sideClass}">
-      <div class="frame"><img src="${item.src}" alt="${item.caption}"></div>
+      <div class="frame"><img class="${mirrorClass.trim()}" src="${item.src}" alt="${item.caption}"></div>
       ${item.caption ? `<div class="cap">${item.caption}</div>` : ''}
     </div>`;
 }
