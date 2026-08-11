@@ -304,10 +304,17 @@ async function loadAlbum() {
   spreads.push({ isCover: true });
   spreads.push({ left: null, right: photos[0] });
   const rest = photos.slice(1);
+  let lastPhoto = rest[rest.length - 1] || photos[0];
   for (let i = 0; i < rest.length; i += 2) {
-    const left = rest[i];
-    const right = rest[i + 1] || { src: left.src, caption: '', mirror: true };
-    spreads.push({ left, right });
+    if (i + 1 < rest.length) {
+      spreads.push({ left: rest[i], right: rest[i + 1] });
+    } else {
+      // odd one out becomes the closing back-cover panel instead of a half-empty page
+      spreads.push({ isBackCover: true, image: rest[i] });
+    }
+  }
+  if (rest.length % 2 === 0) {
+    spreads.push({ isBackCover: true, image: lastPhoto });
   }
 
   statusEl.remove();
@@ -326,9 +333,8 @@ function buildSpine() {
 
 function halfHTML(item, sideClass) {
   if (!item) return `<div class="half ${sideClass}"></div>`;
-  const mirrorClass = item.mirror ? ' mirrored' : '';
   return `<div class="half ${sideClass}">
-      <div class="frame"><img class="${mirrorClass.trim()}" src="${item.src}" alt="${item.caption}"></div>
+      <div class="frame"><img src="${item.src}" alt="${item.caption||''}"></div>
       ${item.caption ? `<div class="cap">${item.caption}</div>` : ''}
     </div>`;
 }
@@ -345,6 +351,12 @@ function coverLeafHTML() {
     </div>`;
 }
 
+function backCoverLeafHTML(image) {
+  return `<div class="cover-leaf">
+      <img src="${image.src}" alt="${image.caption||''}">
+    </div>`;
+}
+
 function renderSpread(index) {
   const spread = spreads[index];
 
@@ -353,6 +365,9 @@ function renderSpread(index) {
 
   if (spread.isCover) {
     leaf.innerHTML = coverLeafHTML();
+    spineEl.classList.add('hidden');
+  } else if (spread.isBackCover) {
+    leaf.innerHTML = backCoverLeafHTML(spread.image);
     spineEl.classList.add('hidden');
   } else {
     leaf.innerHTML = halfHTML(spread.left, 'left') + halfHTML(spread.right, 'right');
@@ -371,25 +386,28 @@ function flipTo(nextIndex, dir) {
   if (animating || nextIndex < 0 || nextIndex >= spreads.length) return;
   animating = true;
 
-  const isCoverTransition = current === 0 || nextIndex === 0;
   const curSpread = spreads[current];
   const nextSpread = spreads[nextIndex];
+  const curIsPanel = curSpread.isCover || curSpread.isBackCover;
+  const nextIsPanel = nextSpread.isCover || nextSpread.isBackCover;
+  const isPanelTransition = curIsPanel || nextIsPanel;
 
   const flip = document.createElement('div');
 
-  if (isCoverTransition) {
+  if (isPanelTransition) {
+    const panelSpread = curIsPanel ? curSpread : nextSpread;
+    const panelImgSrc = panelSpread.isCover ? coverImg.src : panelSpread.image.src;
+
     flip.className = 'flip-page cover-flap';
-    const frontHTML = `<div class="face front cover-face"><img src="${coverImg.src}" alt=""></div>`;
+    const frontHTML = `<div class="face front cover-face"><img src="${panelImgSrc}" alt=""></div>`;
     const backHTML = `<div class="face back"></div>`;
     flip.innerHTML = frontHTML + backHTML;
     book.appendChild(flip);
 
-    if (dir === 'next') {
-      requestAnimationFrame(() => requestAnimationFrame(() => { flip.style.transform = 'rotateY(-180deg)'; }));
-    } else {
-      flip.style.transform = 'rotateY(-180deg)';
-      requestAnimationFrame(() => requestAnimationFrame(() => { flip.style.transform = 'rotateY(0deg)'; }));
-    }
+    const closedRotation = curIsPanel ? 'rotateY(0deg)' : 'rotateY(-180deg)';
+    const openRotation = curIsPanel ? 'rotateY(-180deg)' : 'rotateY(0deg)';
+    flip.style.transform = closedRotation;
+    requestAnimationFrame(() => requestAnimationFrame(() => { flip.style.transform = openRotation; }));
   } else {
     flip.className = 'flip-page ' + (dir === 'next' ? 'right-anchored' : 'left-anchored');
     let frontItem, backItem;
