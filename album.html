@@ -7,8 +7,9 @@
 <style>
   @import url('https://fonts.googleapis.com/css2?family=Playfair+Display:wght@600;700&family=Special+Elite&display=swap');
   :root{
-    --mat:#0b0b0b;
-    --shadow:rgba(0,0,0,0.55);
+    --mat:#e6e5e0;
+    --ink:#2b2b26;
+    --shadow:rgba(0,0,0,0.5);
     --serif:'Playfair Display', Georgia, serif;
     --type:'Special Elite', monospace;
   }
@@ -52,6 +53,7 @@
     box-shadow:0 30px 60px var(--shadow);
     border-radius:6px;
     background:#000;
+    overflow:hidden;
   }
 
   .spine{
@@ -67,7 +69,10 @@
     justify-content:space-evenly;
     align-items:center;
     pointer-events:none;
+    opacity:1;
+    transition:opacity 0.3s;
   }
+  .spine.hidden{ opacity:0; }
   .spine .ring{
     width:20px;
     height:20px;
@@ -96,8 +101,6 @@
     justify-content:center;
     padding:6% 5%;
   }
-  .half.left{ border-radius:6px 0 0 6px; }
-  .half.right{ border-radius:0 6px 6px 0; }
   .half .frame{
     flex:1;
     width:100%;
@@ -111,44 +114,70 @@
     max-width:100%;
     max-height:100%;
     object-fit:contain;
-    box-shadow:0 12px 30px rgba(0,0,0,0.7);
+    box-shadow:0 12px 30px rgba(0,0,0,0.35);
     display:block;
   }
   .half .cap{
     margin-top:12px;
     font-family:var(--serif);
     font-size:13px;
-    color:#d8d0bd;
+    color:var(--ink);
     letter-spacing:0.5px;
   }
-  .half.cover-half{
-    text-align:center;
+
+  /* --- Front cover: single full-bleed image with title overlay --- */
+  .cover-leaf{
+    position:absolute;
+    inset:0;
+    backface-visibility:hidden;
+    -webkit-backface-visibility:hidden;
+    overflow:hidden;
   }
-  .half.cover-half span{
+  .cover-leaf img{
+    width:100%;
+    height:100%;
+    object-fit:cover;
+    display:block;
+  }
+  .cover-leaf .overlay{
+    position:absolute;
+    inset:0;
+    background:linear-gradient(100deg, transparent 40%, rgba(255,255,255,0.15) 55%, rgba(255,255,255,0.55) 75%, rgba(255,255,255,0.85) 100%);
+    display:flex;
+    align-items:center;
+    justify-content:flex-end;
+    padding:6% 6%;
+  }
+  .cover-leaf .title-block{
+    text-align:right;
+  }
+  .cover-leaf .title-block span{
+    display:block;
     font-size:10px;
-    letter-spacing:2px;
+    letter-spacing:3px;
     text-transform:uppercase;
-    color:#8a8370;
+    color:#3a3a34;
     margin-bottom:8px;
   }
-  .half.cover-half h2{
+  .cover-leaf .title-block h2{
     font-family:var(--serif);
-    font-size:clamp(18px,3vw,28px);
+    font-size:clamp(20px,3.4vw,34px);
     margin:0;
-    color:#eee6d3;
+    color:#1c1c18;
+    line-height:1.2;
   }
 
-  /* flipping page sits above, pivots at the spine */
+  /* flipping page: full-width for the cover, half-width for interior pages */
   .flip-page{
     position:absolute;
     top:0; bottom:0;
-    width:50%;
     transform-style:preserve-3d;
     transition:transform 0.8s cubic-bezier(.45,.05,.15,1);
     z-index:40;
   }
-  .flip-page.right-anchored{ left:50%; transform-origin:left center; }
-  .flip-page.left-anchored{ left:0; transform-origin:right center; }
+  .flip-page.cover-flap{ left:0; width:100%; transform-origin:left center; }
+  .flip-page.right-anchored{ left:50%; width:50%; transform-origin:left center; }
+  .flip-page.left-anchored{ left:0; width:50%; transform-origin:right center; }
   .flip-page .face{
     position:absolute;
     inset:0;
@@ -166,9 +195,11 @@
     max-width:100%;
     max-height:100%;
     object-fit:contain;
-    box-shadow:0 12px 30px rgba(0,0,0,0.7);
+    box-shadow:0 12px 30px rgba(0,0,0,0.35);
   }
   .flip-page .face.back{ transform:rotateY(180deg); }
+  .flip-page .face.cover-face{ padding:0; }
+  .flip-page .face.cover-face img{ width:100%; height:100%; max-width:none; max-height:none; object-fit:cover; box-shadow:none; }
 
   .loading, .error{
     position:absolute;
@@ -212,7 +243,7 @@
 <div class="book-stage">
   <div class="book" id="book">
     <div class="loading" id="status">Loading album…</div>
-    <div class="spine" id="spine"></div>
+    <div class="spine hidden" id="spine"></div>
   </div>
 </div>
 
@@ -243,7 +274,7 @@ const counter = document.getElementById('counter');
 
 let photos = [];       // [{src, caption}]
 let spreads = [];      // [{left, right, isCover}]
-let coverImg = null;   // {src, caption}
+let coverImg = null;   // {src}
 let current = 0;
 let animating = false;
 
@@ -267,10 +298,8 @@ async function loadAlbum() {
     return;
   }
 
-  coverImg = { src: `${rawBase}/${COVER_IMAGE}`, caption: '' };
+  coverImg = { src: `${rawBase}/${COVER_IMAGE}` };
 
-  // Spread 0 = cover. Spread 1 = left blank / right photo[0].
-  // Remaining photos paired two per spread from there.
   spreads.push({ isCover: true });
   spreads.push({ left: null, right: photos[0] });
   const rest = photos.slice(1);
@@ -300,30 +329,33 @@ function halfHTML(item, sideClass) {
     </div>`;
 }
 
-function coverHalfLeftHTML() {
-  return `<div class="half left cover-half">
-      <span>Nemours Estate</span>
-      <h2>${ALBUM_TITLE}</h2>
+function coverLeafHTML() {
+  return `<div class="cover-leaf">
+      <img src="${coverImg.src}" alt="${ALBUM_TITLE}">
+      <div class="overlay">
+        <div class="title-block">
+          <span>Nemours Estate</span>
+          <h2>${ALBUM_TITLE}</h2>
+        </div>
+      </div>
     </div>`;
 }
 
 function renderSpread(index) {
   const spread = spreads[index];
-  let leftHTML, rightHTML;
-
-  if (spread.isCover) {
-    leftHTML = coverHalfLeftHTML();
-    rightHTML = halfHTML(coverImg, 'right');
-  } else {
-    leftHTML = halfHTML(spread.left, 'left');
-    rightHTML = halfHTML(spread.right, 'right');
-  }
 
   const leaf = document.createElement('div');
   leaf.className = 'leaf';
-  leaf.innerHTML = leftHTML + rightHTML;
-  book.appendChild(leaf);
 
+  if (spread.isCover) {
+    leaf.innerHTML = coverLeafHTML();
+    spineEl.classList.add('hidden');
+  } else {
+    leaf.innerHTML = halfHTML(spread.left, 'left') + halfHTML(spread.right, 'right');
+    spineEl.classList.remove('hidden');
+  }
+
+  book.appendChild(leaf);
   document.querySelectorAll('.leaf').forEach(el => { if (el !== leaf) el.remove(); });
 
   counter.textContent = `${index + 1} / ${spreads.length}`;
@@ -335,35 +367,46 @@ function flipTo(nextIndex, dir) {
   if (animating || nextIndex < 0 || nextIndex >= spreads.length) return;
   animating = true;
 
+  const isCoverTransition = current === 0 || nextIndex === 0;
   const curSpread = spreads[current];
   const nextSpread = spreads[nextIndex];
 
   const flip = document.createElement('div');
-  flip.className = 'flip-page ' + (dir === 'next' ? 'right-anchored' : 'left-anchored');
 
-  let frontItem, backItem;
-  if (dir === 'next') {
-    frontItem = curSpread.isCover ? coverImg : curSpread.right;
-    backItem = nextSpread.isCover ? null : nextSpread.left;
+  if (isCoverTransition) {
+    flip.className = 'flip-page cover-flap';
+    const frontHTML = `<div class="face front cover-face"><img src="${coverImg.src}" alt=""></div>`;
+    const backHTML = `<div class="face back"></div>`;
+    flip.innerHTML = frontHTML + backHTML;
+    book.appendChild(flip);
+
+    if (dir === 'next') {
+      requestAnimationFrame(() => requestAnimationFrame(() => { flip.style.transform = 'rotateY(-180deg)'; }));
+    } else {
+      flip.style.transform = 'rotateY(-180deg)';
+      requestAnimationFrame(() => requestAnimationFrame(() => { flip.style.transform = 'rotateY(0deg)'; }));
+    }
   } else {
-    frontItem = curSpread.isCover ? null : curSpread.left;
-    backItem = nextSpread.isCover ? coverImg : nextSpread.right;
-  }
+    flip.className = 'flip-page ' + (dir === 'next' ? 'right-anchored' : 'left-anchored');
+    let frontItem, backItem;
+    if (dir === 'next') {
+      frontItem = curSpread.right;
+      backItem = nextSpread.left;
+    } else {
+      frontItem = curSpread.left;
+      backItem = nextSpread.right;
+    }
+    const frontHTML = frontItem ? `<div class="face front"><div class="frame"><img src="${frontItem.src}" alt="${frontItem.caption||''}"></div></div>` : `<div class="face front"></div>`;
+    const backHTML = backItem ? `<div class="face back"><div class="frame"><img src="${backItem.src}" alt="${backItem.caption||''}"></div></div>` : `<div class="face back"></div>`;
+    flip.innerHTML = frontHTML + backHTML;
+    book.appendChild(flip);
 
-  const frontHTML = frontItem ? `<div class="frame"><img src="${frontItem.src}" alt="${frontItem.caption||''}"></div>` : '';
-  const backHTML = backItem ? `<div class="frame"><img src="${backItem.src}" alt="${backItem.caption||''}"></div>` : '';
-
-  flip.innerHTML = `
-    <div class="face front">${frontHTML}</div>
-    <div class="face back">${backHTML}</div>
-  `;
-  book.appendChild(flip);
-
-  requestAnimationFrame(() => {
     requestAnimationFrame(() => {
-      flip.style.transform = dir === 'next' ? 'rotateY(-180deg)' : 'rotateY(180deg)';
+      requestAnimationFrame(() => {
+        flip.style.transform = dir === 'next' ? 'rotateY(-180deg)' : 'rotateY(180deg)';
+      });
     });
-  });
+  }
 
   setTimeout(() => {
     current = nextIndex;
