@@ -1,0 +1,159 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Scrapbook Postcard</title>
+    <!-- Import font Dancing Script cho phần viết thư -->
+    <link href="https://fonts.googleapis.com/css2?family=Dancing+Script:wght@400;600&display=swap" rel="stylesheet">
+    
+    <style>
+        body {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            background-color: #e5e5f7;
+            background-image: radial-gradient(#444cf7 0.5px, #e5e5f7 0.5px);
+            background-size: 10px 10px;
+            margin: 0;
+            font-family: Arial, sans-serif;
+        }
+
+        .postcard {
+            background-color: #fdfaf6;
+            width: 700px;
+            height: 450px;
+            box-shadow: 0 10px 20px rgba(0,0,0,0.15);
+            padding: 30px;
+            box-sizing: border-box;
+            display: flex;
+            border-radius: 5px;
+            position: relative;
+        }
+
+        /* Phần chia đôi bưu thiếp */
+        .divider {
+            position: absolute;
+            left: 50%;
+            top: 30px;
+            bottom: 30px;
+            width: 1px;
+            background-color: #ccc;
+        }
+
+        .left-panel {
+            flex: 1;
+            padding-right: 30px;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .right-panel {
+            flex: 1;
+            padding-left: 30px;
+            position: relative;
+        }
+
+        /* Chỉnh style cho phần textarea viết chữ */
+        .message-area {
+            width: 100%;
+            height: 100%;
+            border: none;
+            resize: none;
+            font-family: 'Dancing Script', cursive;
+            font-size: 26px;
+            line-height: 1.8;
+            background: transparent;
+            outline: none;
+            color: #333;
+            /* Tạo dòng kẻ ngang giống giấy viết thư */
+            background-image: repeating-linear-gradient(transparent, transparent 45px, #ddd 45px, #ddd 46px);
+        }
+
+        /* Khung tem (Stamp box) */
+        .stamp-box {
+            position: absolute;
+            top: 0;
+            right: 0;
+            width: 110px;
+            height: 130px;
+            border: 2px dashed #d9534f;
+            padding: 5px;
+            box-sizing: border-box;
+            text-align: center;
+            background-color: #fff;
+            transition: transform 0.2s ease;
+        }
+
+        .stamp-box:hover {
+            transform: scale(1.05);
+        }
+
+        .stamp-box a {
+            display: block;
+            width: 100%;
+            height: 90px;
+        }
+
+        .stamp-box img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            border-radius: 2px;
+        }
+
+        .stamp-label {
+            font-size: 11px;
+            font-weight: bold;
+            color: #d9534f;
+            margin-top: 8px;
+            text-transform: uppercase;
+        }
+
+        /* Dòng kẻ ghi địa chỉ */
+        .address-container {
+            margin-top: 180px;
+        }
+
+        .address-line {
+            border-bottom: 2px solid #ccc;
+            height: 40px;
+            width: 100%;
+        }
+    </style>
+</head>
+<body>
+
+    <div class="postcard">
+        <!-- Nửa trái: Khu vực viết lời nhắn -->
+        <div class="left-panel">
+            <textarea class="message-area" placeholder="Dear..."></textarea>
+        </div>
+        
+        <!-- Đường kẻ giữa -->
+        <div class="divider"></div>
+
+        <!-- Nửa phải: Khung tem và địa chỉ -->
+        <div class="right-panel">
+            
+            <!-- Khung tem chứa Logo click được -->
+            <div class="stamp-box">
+                <!-- THAY ĐƯỜNG LINK ALBUM VÀO href BÊN DƯỚI -->
+                <a href="LINK_ALBUM_HTML_CUA_BAN.html" target="_blank" title="Click to view full album">
+                    <img src="https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcRgcjPCeLd7p6L_SGiFvlbTmbjIugEYMyJjctWaPFpKpA&s=10" alt="Album Logo">
+                </a>
+                <div class="stamp-label">View Album</div>
+            </div>
+            
+            <!-- Khu vực địa chỉ -->
+            <div class="address-container">
+                <div class="address-line"></div>
+                <div class="address-line"></div>
+                <div class="address-line"></div>
+            </div>
+        </div>
+    </div>
+
+</body>
+</html>

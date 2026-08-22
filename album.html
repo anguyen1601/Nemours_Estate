@@ -1,215 +1,522 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="vi">
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Nemours Estate — Album</title>
+<title>Virtual Photo Album — Nemours Estate</title>
 <style>
-  @import url('https://fonts.googleapis.com/css2?family=Playfair+Display:wght@600;700&family=Special+Elite&display=swap');
-  :root{
-    --paper:#efe8da;
-    --ink:#2b3a55;
-    --shadow:rgba(35,28,15,0.4);
-    --serif:'Playfair Display', Georgia, serif;
-    --type:'Special Elite', monospace;
+  @import url('https://fonts.googleapis.com/css2?family=Caveat:wght@400;600&family=Playfair+Display:ital,wght@0,400;1,600&display=swap');
+  @import url('https://fonts.googleapis.com/css2?family=Dancing+Script:wght@400;700&display=swap');
+
+  * {
+    box-sizing: border-box;
+    margin: 0;
+    padding: 0;
   }
-  *{box-sizing:border-box;}
-  body{
-    margin:0;
-    min-height:100vh;
-    background:#1f2a24;
-    display:flex;
-    flex-direction:column;
-    align-items:center;
-    justify-content:center;
-    padding:40px 16px;
-    font-family:var(--type);
-    color:#eee6d3;
+
+  body {
+    background-color: #f0eadd;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    height: 100vh; 
+    overflow: hidden; 
+    font-family: 'Playfair Display', serif;
   }
-  h1{
-    font-family:var(--serif);
-    font-size:24px;
-    margin:0 0 24px;
-    text-align:center;
+
+  .album-music {
+    position: fixed;
+    bottom: 20px;
+    right: 20px;
+    z-index: 1000;
   }
-  .book-stage{ perspective:2600px; }
-  .book{
-    position:relative;
-    width:min(90vw, 480px);
-    aspect-ratio:3/4;
+
+  .album-scene {
+    perspective: 1500px;
+    width: 900px;
+    height: 600px;
+    position: relative;
+    display: flex;
   }
-  .page{
-    position:absolute;
-    inset:0;
-    background:var(--paper);
-    border-radius:4px;
-    box-shadow:0 20px 45px var(--shadow);
-    transform-origin:left center;
-    transform-style:preserve-3d;
-    transition:transform 0.7s cubic-bezier(.4,.2,.2,1);
-    display:flex;
-    flex-direction:column;
-    overflow:hidden;
+
+  .page-right {
+    position: absolute;
+    right: 0;
+    width: 50%;
+    height: 100%;
+    background-color: #fdfbf7;
+    box-shadow: inset 5px 0 15px rgba(0,0,0,0.1), 10px 10px 20px rgba(0,0,0,0.2);
+    display: flex;
+    flex-direction: column;
+    padding: 15px 25px;
+    border-radius: 0 8px 8px 0;
+    z-index: 1;
+    border-left: 2px solid #e3dec9; 
   }
-  .page img{
-    width:100%;
-    height:100%;
-    object-fit:cover;
-    display:block;
-    backface-visibility:hidden;
+
+  .leaf {
+    position: absolute;
+    right: 0; 
+    width: 50%;
+    height: 100%;
+    transform-origin: left center;
+    transform-style: preserve-3d;
+    transition: transform 1.2s cubic-bezier(0.645, 0.045, 0.355, 1);
+    cursor: pointer;
   }
-  .page .cap{
-    position:absolute;
-    left:0; right:0; bottom:0;
-    padding:10px 14px;
-    background:linear-gradient(to top, rgba(0,0,0,0.55), transparent);
-    color:#f4efe2;
-    font-family:var(--serif);
-    font-size:14px;
+
+  .leaf.flipped {
+    transform: rotateY(-180deg);
   }
-  .page.flipped{ transform:rotateY(-180deg); }
-  .page-num{
-    position:absolute;
-    bottom:8px;
-    right:12px;
-    font-size:10px;
-    color:#eee6d3;
-    background:rgba(0,0,0,0.4);
-    padding:2px 6px;
-    border-radius:3px;
+
+  .face {
+    position: absolute;
+    width: 100%;
+    height: 100%;
+    backface-visibility: hidden;
+    border-radius: 0 8px 8px 0;
   }
-  .loading, .error{
-    font-size:12px;
-    color:#b9ad92;
-    text-align:center;
-    padding:40px 10px;
+
+  .face.front {
+    background-color: #fdfbf7;
+    display: flex;
+    flex-direction: column;
+    padding: 15px 25px;
+    box-shadow: inset 5px 0 15px rgba(0,0,0,0.1);
+    border-left: 2px solid #e3dec9; 
   }
-  .controls{
-    margin-top:22px;
-    display:flex;
-    gap:12px;
-    align-items:center;
+
+  .face.front.cover {
+    background-color: #4A5D23; /* Đổi màu bìa để phù hợp với thiên nhiên */
+    align-items: center;
+    justify-content: center;
+    padding: 0;
+    box-shadow: inset 5px 0 15px rgba(0,0,0,0.3), 5px 5px 15px rgba(0,0,0,0.4);
+    background-image: repeating-linear-gradient(45deg, rgba(255,255,255,0.02) 25%, transparent 25%, transparent 75%, rgba(255,255,255,0.02) 75%, rgba(255,255,255,0.02)), 
+                      repeating-linear-gradient(-45deg, rgba(255,255,255,0.02) 25%, transparent 25%, transparent 75%, rgba(255,255,255,0.02) 75%, rgba(255,255,255,0.02));
+    background-size: 4px 4px;
+    border-left: none;
   }
-  button{
-    font-family:var(--type);
-    font-size:12px;
-    background:#eee6d3;
-    color:#1f2a24;
-    border:none;
-    border-radius:3px;
-    padding:10px 16px;
-    cursor:pointer;
+
+  .spiral-binding {
+    position: absolute;
+    left: -15px;
+    top: 2%;
+    height: 96%;
+    width: 30px;
+    background: repeating-linear-gradient(
+      to bottom,
+      transparent,
+      transparent 15px,
+      #b8860b 15px,
+      #8b6508 20px,
+      transparent 20px,
+      transparent 30px
+    );
+    z-index: 10;
   }
-  button:disabled{ opacity:0.35; cursor:default; }
-  button:hover:not(:disabled){ background:#fff; }
-  .counter{ font-size:12px; color:#b9ad92; min-width:60px; text-align:center; }
+
+  .corner {
+    position: absolute;
+    width: 40px;
+    height: 40px;
+    border: 3px solid #d4af37;
+  }
+  .corner-top-right { top: 10px; right: 10px; border-bottom: none; border-left: none; }
+  .corner-bottom-right { bottom: 10px; right: 10px; border-top: none; border-left: none; }
+
+  .cover-photo-slot {
+    width: 75%;
+    aspect-ratio: 4/3;
+    background: #000;
+    margin-bottom: 25px;
+    box-shadow: 0 4px 10px rgba(0,0,0,0.5);
+    border: 1px solid rgba(255,255,255,0.1);
+    overflow: hidden;
+  }
+  .cover-photo-slot img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    cursor: pointer;
+  }
+  
+  .cover-title {
+    color: #ffffff; 
+    text-shadow: 1px 1px 3px rgba(0,0,0,0.3);
+    font-size: 22px; 
+    letter-spacing: 4px; 
+    text-transform: uppercase;
+    text-align: center;
+    width: 100%;
+    line-height: 1.5; 
+  }
+
+  .cover-date-input {
+    background: transparent;
+    border: none;
+    color: #ffffff;
+    text-shadow: 1px 1px 3px rgba(0,0,0,0.3);
+    font-family: 'Playfair Display', serif;
+    font-size: 14px;
+    letter-spacing: 3px;
+    text-align: center;
+    margin-top: 15px;
+    outline: none;
+    width: 80%;
+  }
+
+  .face.back {
+    background-color: #fdfbf7;
+    transform: rotateY(180deg);
+    box-shadow: inset -5px 0 15px rgba(0,0,0,0.1);
+    border-radius: 8px 0 0 8px;
+    display: flex;
+    flex-direction: column;
+    padding: 15px 25px;
+    border-left: none;
+  }
+
+  .travel-tag {
+    position: absolute;
+    top: 15px;
+    right: 25px;
+    font-family: 'Caveat', cursive;
+    font-size: 22px; 
+    color: #C4673B; 
+    font-weight: bold;
+    z-index: 5;
+    pointer-events: none;
+  }
+  .face.back .travel-tag {
+    left: 25px; 
+    right: auto;
+  }
+  
+  .layout-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    grid-template-rows: auto auto;
+    gap: 10px;
+    width: 100%;
+    height: 100%;
+    margin-top: 25px;
+  }
+
+  .top-section, .bottom-section {
+    grid-column: 1 / -1;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+  }
+
+  .photo-frame {
+    background: #fff;
+    padding: 8px 8px 22px 8px;
+    box-shadow: 2px 4px 10px rgba(0,0,0,0.15);
+    width: 48%;
+    transform: rotate(-2deg);
+    transition: transform 0.3s;
+  }
+  .photo-frame:nth-child(even) {
+    transform: rotate(2deg);
+  }
+  .photo-frame:hover {
+    transform: rotate(0deg) scale(1.05);
+    z-index: 10;
+  }
+  
+  .photo-frame img {
+    width: 100%;
+    aspect-ratio: 1/1;
+    object-fit: cover;
+    background: #e0e0e0;
+    cursor: pointer;
+  }
+
+  .text-block {
+    width: 48%;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    padding: 5px;
+  }
+
+  .page-title {
+    font-family: 'Caveat', cursive;
+    font-size: 20px; 
+    color: #333;
+    border: none;
+    background: transparent;
+    outline: none;
+    margin-bottom: 5px;
+    text-align: center;
+  }
+
+  .scrapbook-text {
+    font-family: 'Dancing Script', cursive;
+    font-size: 15px; 
+    color: #555;
+    background: transparent;
+    border: none;
+    resize: none;
+    width: 100%;
+    height: 120px;
+    outline: none;
+    line-height: 1.3; 
+    text-align: center;
+    overflow: hidden; 
+  }
+
+  .photo-frame, .text-block, .cover-date-input, .cover-title {
+    cursor: default; 
+  }
+  .photo-frame img, .cover-photo-slot img {
+    cursor: pointer; 
+  }
+
+  .modal {
+    visibility: hidden;
+    opacity: 0;
+    position: fixed;
+    z-index: 2000;
+    left: 0;
+    top: 0;
+    width: 100%;
+    height: 100%;
+    background-color: rgba(0, 0, 0, 0.85);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    transition: opacity 0.3s ease, visibility 0.3s ease;
+  }
+  .modal.active {
+    visibility: visible;
+    opacity: 1;
+  }
+  .modal-content {
+    max-width: 85%;
+    max-height: 85%;
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.6);
+    border: 8px solid #fff;
+    border-radius: 4px;
+    transform: scale(0.8);
+    transition: transform 0.3s ease;
+    object-fit: contain;
+  }
+  .modal.active .modal-content {
+    transform: scale(1);
+  }
+  .close-btn {
+    position: absolute;
+    top: 20px;
+    right: 40px;
+    color: #fff;
+    font-size: 50px;
+    font-weight: bold;
+    cursor: pointer;
+    transition: color 0.2s;
+  }
+  .close-btn:hover {
+    color: #d4af37;
+  }
 </style>
 </head>
 <body>
 
-<h1>Nemours Estate — Album</h1>
-
-<div class="book-stage">
-  <div class="book" id="book">
-    <div class="loading" id="status">Loading album…</div>
-  </div>
+<div class="album-scene" id="album">
 </div>
 
-<div class="controls">
-  <button id="prevBtn">&larr; Prev</button>
-  <span class="counter" id="counter">– / –</span>
-  <button id="nextBtn">Next &rarr;</button>
+<div id="imageModal" class="modal" onclick="closeModal()">
+  <span class="close-btn">&times;</span>
+  <img class="modal-content" id="modalImg">
 </div>
 
 <script>
-/* ---- Config: point this at your GitHub repo/folder ---- */
-const GITHUB_OWNER  = "anguyen1601";
-const GITHUB_REPO   = "postcards";
-const GITHUB_BRANCH = "main";
-const GITHUB_PATH   = "images/nemours-estate";   // folder containing the photos
-const COVER_IMAGE   = `${GITHUB_PATH}/cover.jpg`; // cover image, same folder
-const ALBUM_TITLE   = "Nemours Estate";
+const ALBUM_TITLE = "Gia tộc DuPont";
+const COVER_IMAGE = "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcRyoFPgLpEnUHvVLdmEf4PZrEYTeRvC7_SbPc9XkX2Sdwc6aadugEMIP4A&s=10";
 
-const apiUrl  = `https://api.github.com/repos/${GITHUB_OWNER}/${GITHUB_REPO}/contents/${GITHUB_PATH}?ref=${GITHUB_BRANCH}`;
-const rawBase = `https://raw.githubusercontent.com/${GITHUB_OWNER}/${GITHUB_REPO}/${GITHUB_BRANCH}`;
+// Sắp xếp tĩnh các hình ảnh từ ngoài vào trong cùng mô tả mộc mạc
+// Bức ảnh "20260728_181948.jpg" được đặt cuối cùng để hiện ở trang chót của album
+const photos = [
+  { src: "20260728_140931.jpg", caption: "Phòng Sunroom", desc: "Không gian thư giãn đón trọn ánh nắng qua những khung cửa lớn." },
+  { src: "20260728_142606.jpg", caption: "Hành lang chính", desc: "Hành lang lát gạch caro uy nghi rực rỡ dưới ánh đèn pha lê." },
+  { src: "20260728_151519.jpg", caption: "Cầu thang lớn", desc: "Tuyệt tác lan can uốn lượn cạnh bức tranh tường hoa lệ." },
+  { src: "20260728_141246.jpg", caption: "Phòng Âm nhạc", desc: "Nơi diễn ra những buổi dạ tiệc bên phím đàn piano sang trọng." },
+  { src: "20260728_141822.jpg", caption: "Thư viện ốp gỗ", desc: "Góc yên tĩnh ngập tràn tri thức và kiến trúc trần cầu kỳ." },
+  { src: "20260728_151735.jpg", caption: "Nhà bếp cổ điển", desc: "Không gian bếp rộng rãi lấp lánh những bộ xoong nồi bằng đồng." },
+  { src: "20260728_154444.jpg", caption: "Sân Bowling", desc: "Góc giải trí mộc mạc ẩn mình ở khu vực tầng trệt." },
+  { src: "20260728_173621.jpg", caption: "Khuôn viên Dinh thự", desc: "Không gian thiên nhiên rợp bóng cây xanh và tiếng suối róc rách." },
+  { src: "20260728_163237.jpg", caption: "Khu vườn hoa", desc: "Lối đi ngập tràn sắc hoa rực rỡ dẫn vào khuôn viên chính." },
+  { src: "20260728_163744.jpg", caption: "Mặt tiền Dinh thự", desc: "Kiến trúc tráng lệ của Nemours Estate nhìn từ phía trước." },
+  { src: "20260728_164134.jpg", caption: "Đài phun nước", desc: "Đài phun nước khổng lồ tạo điểm nhấn mát mẻ cho khu vườn." },
+  { src: "20260728_172928.jpg", caption: "Bảo tàng Hagley", desc: "Cổng chào khu di tích xưởng thuốc súng bên dòng sông." },
+  { src: "20260728_173434.jpg", caption: "Xưởng đá cổ", desc: "Tòa nhà bằng đá mộc mạc lưu giữ nhiều dấu ấn thời gian." },
+  { src: "20260728_173621_2.jpg", caption: "Dòng sông êm đềm", desc: "Khung cảnh thiên nhiên yên bình bên dòng nước trong xanh." },
+  { src: "20260728_174831.jpg", caption: "Tượng đài lịch sử", desc: "Bức tượng đồng uy nghi đứng trước ngọn tháp đá cổ kính." },
+  { src: "20260728_181908.jpg", caption: "Tòa án cổ", desc: "Tòa nhà gạch đỏ đặc trưng với tháp chuông nổi bật giữa phố." },
+  { src: "20260728_182255.jpg", caption: "Kiến trúc mái đỏ", desc: "Một góc nhà gạch đỏ cổ kính được bao quanh bởi cây xanh." },
+  { src: "20260728_181948.jpg", caption: "Dãy phố lịch sử", desc: "Con đường lát gạch với những ngôi nhà mang đậm dấu ấn thời gian." }
+];
 
-const book = document.getElementById('book');
-const statusEl = document.getElementById('status');
-const prevBtn = document.getElementById('prevBtn');
-const nextBtn = document.getElementById('nextBtn');
-const counter = document.getElementById('counter');
+let currentZ = 20;
 
-let pages = [];   // [{src, caption}]
-let current = 0;
+function initAlbum() {
+  const albumContainer = document.getElementById('album');
 
-async function loadAlbum() {
-  let photoUrls = [];
-  try {
-    const res = await fetch(apiUrl);
-    if (!res.ok) throw new Error('GitHub API error ' + res.status);
-    const files = await res.json();
-    photoUrls = files
-      .filter(f => f.type === 'file' && /\.(jpe?g|png|webp)$/i.test(f.name) && f.name.toLowerCase() !== 'cover.jpg')
-      .sort((a, b) => a.name.localeCompare(b.name))
-      .map(f => ({ src: `${rawBase}/${GITHUB_PATH}/${f.name}`, caption: f.name.replace(/\.[^.]+$/, '').replace(/_/g, ' ') }));
-  } catch (err) {
-    statusEl.textContent = 'Could not load images from GitHub.';
-    console.error(err);
-    return;
+  const coverObj = { src: COVER_IMAGE, caption: ALBUM_TITLE };
+  
+  // Rút phần tử cuối cùng để làm trang cuối
+  let lastPhoto = photos.pop();
+
+  // 1. Tạo Trang Cố Định Phía Sau Cùng (Fixed Back Page)
+  const fixedBack = document.createElement('div');
+  fixedBack.className = 'page-right';
+  fixedBack.innerHTML = `
+    <div class="travel-tag">Hoàn tất</div>
+    <div class="layout-grid" style="grid-template-rows: auto 1fr;">
+      <div class="top-section" style="justify-content: center; margin-top: 10px;">
+        <div class="photo-frame" style="width: 60%; transform: rotate(0deg); padding: 8px 8px 25px 8px;">
+          <img src="${lastPhoto.src}" alt="${lastPhoto.caption}" class="zoomable" style="aspect-ratio: 3/4;">
+        </div>
+      </div>
+      <div class="bottom-section" style="justify-content: center; align-items: flex-start; margin-top: 15px;">
+        <div class="text-block" style="width: 85%;">
+          <input type="text" class="page-title" value="${lastPhoto.caption}" readonly>
+          <textarea class="scrapbook-text" readonly>${lastPhoto.desc}</textarea>
+        </div>
+      </div>
+    </div>
+  `;
+  albumContainer.appendChild(fixedBack);
+
+  // 2. Chia nhỏ danh sách ảnh còn lại để phân vào các Leaf
+  let photoPairs = [];
+  for (let i = 0; i < photos.length; i += 2) {
+    photoPairs.push(photos.slice(i, i + 2));
   }
 
-  pages = [
-    { src: `${rawBase}/${COVER_IMAGE}`, caption: ALBUM_TITLE, isCover: true },
-    ...photoUrls
-  ];
+  let leafCount = Math.ceil((photoPairs.length + 1) / 2);
+  let pairIndex = 0;
 
-  if (pages.length === 1) {
-    statusEl.textContent = 'No photos found in ' + GITHUB_PATH;
-    return;
-  }
+  for (let l = 1; l <= leafCount; l++) {
+    const leafId = `leaf${l}`;
+    const leafEl = document.createElement('div');
+    leafEl.className = 'leaf';
+    leafEl.id = leafId;
+    leafEl.style.zIndex = leafCount - l + 10;
 
-  buildBook();
-}
+    let frontHTML = '';
+    let backHTML = '';
 
-function buildBook() {
-  book.innerHTML = '';
-  pages.forEach((p, i) => {
-    const div = document.createElement('div');
-    div.className = 'page';
-    div.style.zIndex = pages.length - i;
-    div.innerHTML = `
-      <img src="${p.src}" alt="${p.caption}" loading="lazy">
-      <div class="cap">${p.isCover ? p.caption : p.caption}</div>
-      <div class="page-num">${i + 1} / ${pages.length}</div>
+    // Mặt trước (Front)
+    if (l === 1) {
+      frontHTML = `
+        <div class="face front cover" onclick="flipLeaf('${leafId}', true, event)">
+          <div class="spiral-binding"></div>
+          <div class="corner corner-top-right"></div>
+          <div class="corner corner-bottom-right"></div>
+          <div class="cover-photo-slot">
+            <img src="${coverObj.src}" alt="${ALBUM_TITLE}" class="zoomable">
+          </div>
+          <h1 class="cover-title">NEMOURS ESTATE</h1>
+          <input type="text" class="cover-date-input" value="Delaware — 28/07/2026" readonly>
+        </div>
+      `;
+    } else {
+      const pair = photoPairs[pairIndex++] || [];
+      frontHTML = `
+        <div class="face front" onclick="flipLeaf('${leafId}', true, event)">
+          <div class="travel-tag">Kiến trúc</div>
+          ${renderLayoutGrid(pair)}
+        </div>
+      `;
+    }
+
+    // Mặt sau (Back)
+    const backPair = photoPairs[pairIndex++] || [];
+    backHTML = `
+      <div class="face back" onclick="flipLeaf('${leafId}', false, event)">
+        <div class="travel-tag">Không gian</div>
+        ${renderLayoutGrid(backPair)}
+      </div>
     `;
-    book.appendChild(div);
+
+    leafEl.innerHTML = frontHTML + backHTML;
+    albumContainer.appendChild(leafEl);
+  }
+
+  // Đăng ký sự kiện xem ảnh
+  document.querySelectorAll('.zoomable').forEach(img => {
+    img.addEventListener('click', function(e) {
+      e.stopPropagation(); 
+      const modal = document.getElementById('imageModal');
+      const modalImg = document.getElementById('modalImg');
+      modalImg.src = this.src;
+      modal.classList.add('active');
+    });
   });
-  render();
 }
 
-function render() {
-  const pageEls = book.querySelectorAll('.page');
-  pageEls.forEach((el, i) => {
-    el.classList.toggle('flipped', i < current);
-    el.style.zIndex = i < current ? i : pages.length - i;
-  });
-  counter.textContent = `${current + 1} / ${pages.length}`;
-  prevBtn.disabled = current === 0;
-  nextBtn.disabled = current === pages.length - 1;
+function renderLayoutGrid(pair) {
+  const item1 = pair[0];
+  const item2 = pair[1];
+
+  return `
+    <div class="layout-grid">
+      <div class="top-section">
+        ${item1 ? `
+          <div class="photo-frame"><img src="${item1.src}" alt="${item1.caption}" class="zoomable"></div>
+          <div class="text-block">
+            <input type="text" class="page-title" value="${item1.caption}" readonly>
+            <textarea class="scrapbook-text" readonly>${item1.desc}</textarea>
+          </div>
+        ` : ''}
+      </div>
+      <div class="bottom-section">
+        ${item2 ? `
+          <div class="text-block">
+            <input type="text" class="page-title" value="${item2.caption}" readonly>
+            <textarea class="scrapbook-text" readonly>${item2.desc}</textarea>
+          </div>
+          <div class="photo-frame"><img src="${item2.src}" alt="${item2.caption}" class="zoomable"></div>
+        ` : ''}
+      </div>
+    </div>
+  `;
 }
 
-prevBtn.addEventListener('click', () => {
-  if (current > 0) { current--; render(); }
-});
-nextBtn.addEventListener('click', () => {
-  if (current < pages.length - 1) { current++; render(); }
-});
-document.addEventListener('keydown', (e) => {
-  if (e.key === 'ArrowRight') nextBtn.click();
-  if (e.key === 'ArrowLeft') prevBtn.click();
-});
+function flipLeaf(leafId, forward, event) {
+  if (event) {
+    if (
+      event.target.closest('.photo-frame') ||
+      event.target.closest('.text-block') ||
+      event.target.closest('.cover-photo-slot') ||
+      ['input', 'textarea', 'img'].includes(event.target.tagName.toLowerCase())
+    ) {
+      return; 
+    }
+    event.stopPropagation(); 
+  }
 
-loadAlbum();
+  const leaf = document.getElementById(leafId);
+  currentZ++;
+  leaf.style.zIndex = currentZ;
+
+  if (forward) {
+    leaf.classList.add('flipped');
+  } else {
+    leaf.classList.remove('flipped');
+  }
+}
+
+function closeModal() {
+  document.getElementById('imageModal').classList.remove('active');
+}
+
+document.addEventListener('DOMContentLoaded', () => {
+  initAlbum();
+});
 </script>
 
 </body>
