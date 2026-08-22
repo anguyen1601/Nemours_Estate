@@ -87,7 +87,7 @@
   }
 
   .face.front.cover {
-    background-color: #4A5D23; /* Đổi màu bìa để phù hợp với thiên nhiên */
+    background-color: #F8C39F; 
     align-items: center;
     justify-content: center;
     padding: 0;
@@ -144,7 +144,7 @@
   .cover-title {
     color: #ffffff; 
     text-shadow: 1px 1px 3px rgba(0,0,0,0.3);
-    font-size: 22px; 
+    font-size: 18px; 
     letter-spacing: 4px; 
     text-transform: uppercase;
     text-align: center;
@@ -275,6 +275,18 @@
     cursor: pointer; 
   }
 
+  .loading-overlay {
+    position: absolute;
+    inset: 0;
+    background: #f0eadd;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 20px;
+    color: #333;
+    z-index: 9999;
+  }
+
   .modal {
     visibility: hidden;
     opacity: 0;
@@ -324,7 +336,12 @@
 </head>
 <body>
 
+<audio class="album-music" controls autoplay loop>
+  <source src="backgroudmusic.mp3" type="audio/mpeg">
+</audio>
+
 <div class="album-scene" id="album">
+  <div class="loading-overlay" id="loading">Đang tải album ảnh từ GitHub...</div>
 </div>
 
 <div id="imageModal" class="modal" onclick="closeModal()">
@@ -333,47 +350,58 @@
 </div>
 
 <script>
-const ALBUM_TITLE = "Gia tộc DuPont";
-const COVER_IMAGE = "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcRyoFPgLpEnUHvVLdmEf4PZrEYTeRvC7_SbPc9XkX2Sdwc6aadugEMIP4A&s=10";
+/* Cấu hình kết nối kho ảnh GitHub */
+const GITHUB_OWNER  = "anguyen1601";
+const GITHUB_REPO   = "Nemours_Estate";
+const GITHUB_BRANCH = "main";
+const GITHUB_PATH   = "images";
+const COVER_IMAGE   = `${GITHUB_PATH}/cover.jpg`;
+const ALBUM_TITLE   = "Nemours Estate";
 
-// Sắp xếp tĩnh các hình ảnh từ ngoài vào trong cùng mô tả mộc mạc
-// Bức ảnh "20260728_181948.jpg" được đặt cuối cùng để hiện ở trang chót của album
-const photos = [
-  { src: "20260728_140931.jpg", caption: "Phòng Sunroom", desc: "Không gian thư giãn đón trọn ánh nắng qua những khung cửa lớn." },
-  { src: "20260728_142606.jpg", caption: "Hành lang chính", desc: "Hành lang lát gạch caro uy nghi rực rỡ dưới ánh đèn pha lê." },
-  { src: "20260728_151519.jpg", caption: "Cầu thang lớn", desc: "Tuyệt tác lan can uốn lượn cạnh bức tranh tường hoa lệ." },
-  { src: "20260728_141246.jpg", caption: "Phòng Âm nhạc", desc: "Nơi diễn ra những buổi dạ tiệc bên phím đàn piano sang trọng." },
-  { src: "20260728_141822.jpg", caption: "Thư viện ốp gỗ", desc: "Góc yên tĩnh ngập tràn tri thức và kiến trúc trần cầu kỳ." },
-  { src: "20260728_151735.jpg", caption: "Nhà bếp cổ điển", desc: "Không gian bếp rộng rãi lấp lánh những bộ xoong nồi bằng đồng." },
-  { src: "20260728_154444.jpg", caption: "Sân Bowling", desc: "Góc giải trí mộc mạc ẩn mình ở khu vực tầng trệt." },
-  { src: "20260728_173621.jpg", caption: "Khuôn viên Dinh thự", desc: "Không gian thiên nhiên rợp bóng cây xanh và tiếng suối róc rách." },
-  { src: "20260728_163237.jpg", caption: "Khu vườn hoa", desc: "Lối đi ngập tràn sắc hoa rực rỡ dẫn vào khuôn viên chính." },
-  { src: "20260728_163744.jpg", caption: "Mặt tiền Dinh thự", desc: "Kiến trúc tráng lệ của Nemours Estate nhìn từ phía trước." },
-  { src: "20260728_164134.jpg", caption: "Đài phun nước", desc: "Đài phun nước khổng lồ tạo điểm nhấn mát mẻ cho khu vườn." },
-  { src: "20260728_172928.jpg", caption: "Bảo tàng Hagley", desc: "Cổng chào khu di tích xưởng thuốc súng bên dòng sông." },
-  { src: "20260728_173434.jpg", caption: "Xưởng đá cổ", desc: "Tòa nhà bằng đá mộc mạc lưu giữ nhiều dấu ấn thời gian." },
-  { src: "20260728_173621_2.jpg", caption: "Dòng sông êm đềm", desc: "Khung cảnh thiên nhiên yên bình bên dòng nước trong xanh." },
-  { src: "20260728_174831.jpg", caption: "Tượng đài lịch sử", desc: "Bức tượng đồng uy nghi đứng trước ngọn tháp đá cổ kính." },
-  { src: "20260728_181908.jpg", caption: "Tòa án cổ", desc: "Tòa nhà gạch đỏ đặc trưng với tháp chuông nổi bật giữa phố." },
-  { src: "20260728_182255.jpg", caption: "Kiến trúc mái đỏ", desc: "Một góc nhà gạch đỏ cổ kính được bao quanh bởi cây xanh." },
-  { src: "20260728_181948.jpg", caption: "Dãy phố lịch sử", desc: "Con đường lát gạch với những ngôi nhà mang đậm dấu ấn thời gian." }
-];
+const apiUrl  = `https://api.github.com/repos/${GITHUB_OWNER}/${GITHUB_REPO}/contents/${GITHUB_PATH}?ref=${GITHUB_BRANCH}`;
+const rawBase = `https://raw.githubusercontent.com/${GITHUB_OWNER}/${GITHUB_REPO}/${GITHUB_BRANCH}`;
 
 let currentZ = 20;
+let photos = [];
 
-function initAlbum() {
+async function initAlbum() {
   const albumContainer = document.getElementById('album');
+  const loadingEl = document.getElementById('loading');
 
-  const coverObj = { src: COVER_IMAGE, caption: ALBUM_TITLE };
+  try {
+    const res = await fetch(apiUrl);
+    if (!res.ok) throw new Error('Không thể tải từ GitHub API');
+    const files = await res.json();
+    
+    photos = files
+      .filter(f => f.type === 'file' && /\.(jpe?g|png|webp)$/i.test(f.name) && f.name.toLowerCase() !== 'cover.jpg')
+      .sort((a, b) => a.name.localeCompare(b.name))
+      .map(f => ({
+        src: `${rawBase}/${GITHUB_PATH}/${f.name}`,
+        caption: f.name.replace(/\.[^.]+$/, '').replace(/_/g, ' ')
+      }));
+  } catch (err) {
+    loadingEl.textContent = 'Lỗi tải dữ liệu hình ảnh từ GitHub!';
+    console.error(err);
+    return;
+  }
+
+  const coverObj = { src: `${rawBase}/${COVER_IMAGE}`, caption: ALBUM_TITLE };
   
-  // Rút phần tử cuối cùng để làm trang cuối
-  let lastPhoto = photos.pop();
+  // Tách riêng bức ảnh cuối cùng để làm trang bìa sau cùng
+  let lastPhoto = coverObj;
+  if (photos.length > 0) {
+      lastPhoto = photos.pop();
+  }
 
-  // 1. Tạo Trang Cố Định Phía Sau Cùng (Fixed Back Page)
+  // Xóa màn hình loading
+  loadingEl.remove();
+
+  // 1. Tạo Trang Cố Định Phía Sau Cùng (Fixed Back Page) chuẩn form New York
   const fixedBack = document.createElement('div');
   fixedBack.className = 'page-right';
   fixedBack.innerHTML = `
-    <div class="travel-tag">Hoàn tất</div>
+    <div class="travel-tag">The End</div>
     <div class="layout-grid" style="grid-template-rows: auto 1fr;">
       <div class="top-section" style="justify-content: center; margin-top: 10px;">
         <div class="photo-frame" style="width: 60%; transform: rotate(0deg); padding: 8px 8px 25px 8px;">
@@ -382,8 +410,8 @@ function initAlbum() {
       </div>
       <div class="bottom-section" style="justify-content: center; align-items: flex-start; margin-top: 15px;">
         <div class="text-block" style="width: 85%;">
-          <input type="text" class="page-title" value="${lastPhoto.caption}" readonly>
-          <textarea class="scrapbook-text" readonly>${lastPhoto.desc}</textarea>
+          <input type="text" class="page-title" value="Kỷ Niệm Đẹp" readonly>
+          <textarea class="scrapbook-text" readonly>Chuyến đi khép lại tại đây. Những khoảnh khắc tuyệt vời sẽ còn giữ mãi!</textarea>
         </div>
       </div>
     </div>
@@ -396,6 +424,8 @@ function initAlbum() {
     photoPairs.push(photos.slice(i, i + 2));
   }
 
+  if (photoPairs.length === 0) photoPairs.push([]);
+
   let leafCount = Math.ceil((photoPairs.length + 1) / 2);
   let pairIndex = 0;
 
@@ -404,6 +434,7 @@ function initAlbum() {
     const leafEl = document.createElement('div');
     leafEl.className = 'leaf';
     leafEl.id = leafId;
+    // Set z-index để trang bìa luôn nằm trên cùng
     leafEl.style.zIndex = leafCount - l + 10;
 
     let frontHTML = '';
@@ -419,7 +450,7 @@ function initAlbum() {
           <div class="cover-photo-slot">
             <img src="${coverObj.src}" alt="${ALBUM_TITLE}" class="zoomable">
           </div>
-          <h1 class="cover-title">NEMOURS ESTATE</h1>
+          <h1 class="cover-title">${ALBUM_TITLE}</h1>
           <input type="text" class="cover-date-input" value="Delaware — Photo Album" readonly>
         </div>
       `;
@@ -427,7 +458,7 @@ function initAlbum() {
       const pair = photoPairs[pairIndex++] || [];
       frontHTML = `
         <div class="face front" onclick="flipLeaf('${leafId}', true, event)">
-          <div class="travel-tag">Kiến trúc</div>
+          <div class="travel-tag">Khám Phá</div>
           ${renderLayoutGrid(pair)}
         </div>
       `;
@@ -437,7 +468,7 @@ function initAlbum() {
     const backPair = photoPairs[pairIndex++] || [];
     backHTML = `
       <div class="face back" onclick="flipLeaf('${leafId}', false, event)">
-        <div class="travel-tag">Không gian</div>
+        <div class="travel-tag">Kỷ Niệm</div>
         ${renderLayoutGrid(backPair)}
       </div>
     `;
@@ -446,7 +477,7 @@ function initAlbum() {
     albumContainer.appendChild(leafEl);
   }
 
-  // Đăng ký sự kiện xem ảnh
+  // Đăng ký sự kiện xem ảnh cho toàn bộ ảnh vừa tạo
   document.querySelectorAll('.zoomable').forEach(img => {
     img.addEventListener('click', function(e) {
       e.stopPropagation(); 
@@ -462,6 +493,7 @@ function renderLayoutGrid(pair) {
   const item1 = pair[0];
   const item2 = pair[1];
 
+  // Bố cục xen kẽ trái phải chuẩn form New York
   return `
     <div class="layout-grid">
       <div class="top-section">
@@ -469,7 +501,7 @@ function renderLayoutGrid(pair) {
           <div class="photo-frame"><img src="${item1.src}" alt="${item1.caption}" class="zoomable"></div>
           <div class="text-block">
             <input type="text" class="page-title" value="${item1.caption}" readonly>
-            <textarea class="scrapbook-text" readonly>${item1.desc}</textarea>
+            <textarea class="scrapbook-text" readonly>Góc chụp tuyệt đẹp tại ${item1.caption}.</textarea>
           </div>
         ` : ''}
       </div>
@@ -477,7 +509,7 @@ function renderLayoutGrid(pair) {
         ${item2 ? `
           <div class="text-block">
             <input type="text" class="page-title" value="${item2.caption}" readonly>
-            <textarea class="scrapbook-text" readonly>${item2.desc}</textarea>
+            <textarea class="scrapbook-text" readonly>Khoảnh khắc lưu giữ tại ${item2.caption}.</textarea>
           </div>
           <div class="photo-frame"><img src="${item2.src}" alt="${item2.caption}" class="zoomable"></div>
         ` : ''}
@@ -499,6 +531,12 @@ function flipLeaf(leafId, forward, event) {
     event.stopPropagation(); 
   }
 
+  const music = document.querySelector('.album-music');
+  if (music && music.paused) {
+    music.volume = 0.4;
+    music.play().catch(error => console.log("Playback error:", error));
+  }
+
   const leaf = document.getElementById(leafId);
   currentZ++;
   leaf.style.zIndex = currentZ;
@@ -515,6 +553,17 @@ function closeModal() {
 }
 
 document.addEventListener('DOMContentLoaded', () => {
+  const music = document.querySelector('.album-music');
+  if (music) {
+    music.volume = 0.4; 
+    const startOnInteraction = () => {
+      music.play().catch(() => {});
+      document.removeEventListener('click', startOnInteraction);
+      document.removeEventListener('keydown', startOnInteraction);
+    };
+    document.addEventListener('click', startOnInteraction);
+    document.addEventListener('keydown', startOnInteraction);
+  }
   initAlbum();
 });
 </script>
